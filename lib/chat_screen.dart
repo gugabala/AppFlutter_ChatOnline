@@ -32,11 +32,40 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("olá"),
-        elevation: 0,
-      ),
-      body: TextComposer(_sendMessage),
-    );
+        appBar: AppBar(
+          title: Text("olá"),
+          elevation: 0,
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: Firestore.instance.collection('messages').snapshots(),
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    default:
+                      List<DocumentSnapshot> documentos =
+                          snapshot.data.documents.reversed.toList();
+
+                      return ListView.builder(
+                          itemCount: documentos.length,
+                          reverse: true,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              title: Text(documentos[index].data['text']),
+                            );
+                          });
+                  }
+                },
+              ),
+            ),
+            TextComposer(_sendMessage),
+          ],
+        ));
   }
 }
