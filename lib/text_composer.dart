@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class TextComposer extends StatefulWidget {
   Function(String) sendMessage;
@@ -29,7 +30,9 @@ class _TextComposerState extends State<TextComposer> {
         children: [
           IconButton(
             icon: Icon(Icons.photo_camera),
-            onPressed: () {},
+            onPressed: () async {
+              await ImagePicker.pickImage(source: ImageSource.camera);
+            },
           ),
           Expanded(
             child: TextField(
