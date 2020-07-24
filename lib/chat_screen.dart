@@ -17,6 +17,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   FirebaseUser _currentUser;
 
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +60,8 @@ class _ChatScreenState extends State<ChatScreen> {
     Map<String, dynamic> data = {
       "uid": user.uid,
       "senderName": user.displayName,
-      "senderPhotoUrl": user.photoUrl
+      "senderPhotoUrl": user.photoUrl,
+      "time": Timestamp.now()
     };
 
     if (imgFile != null) {
@@ -67,10 +70,18 @@ class _ChatScreenState extends State<ChatScreen> {
           .child(DateTime.now().millisecondsSinceEpoch.toString())
           .putFile(imgFile);
 
+      setState(() {
+        _isLoading = true;
+      });
+
       StorageTaskSnapshot taskSnapshot = await task.onComplete;
       String url = await taskSnapshot.ref.getDownloadURL();
       // print(url);
       data['imgUrl'] = url;
+
+      setState(() {
+        _isLoading = false;
+      });
     }
     if (text != null) data['text'] = text;
     Firestore.instance.collection("messages").add(data);
@@ -106,7 +117,10 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: Firestore.instance.collection('messages').snapshots(),
+                stream: Firestore.instance
+                    .collection('messages')
+                    .orderBy('time')
+                    .snapshots(),
                 builder: (context, snapshot) {
                   switch (snapshot.connectionState) {
                     case ConnectionState.none:
@@ -122,12 +136,16 @@ class _ChatScreenState extends State<ChatScreen> {
                           itemCount: documentos.length,
                           reverse: true,
                           itemBuilder: (context, index) {
-                            return ChatMassege(documentos[index].data, true);
+                            return ChatMassege(
+                                documentos[index].data,
+                                documentos[index].data['uid'] ==
+                                    _currentUser?.uid);
                           });
                   }
                 },
               ),
             ),
+            _isLoading ? LinearProgressIndicator() : Container(),
             TextComposer(_sendMessage),
           ],
         ));
