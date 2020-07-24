@@ -45,6 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
       final FirebaseUser user = authResult.user;
       return user;
     } catch (error) {
+      print(error);
       return null;
     }
   }
